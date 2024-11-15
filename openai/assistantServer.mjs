@@ -12,6 +12,37 @@ const OPENAPI_KEY = process.env.OPENAPI_KEY;
 const OPENAPI_PROJECT = process.env.OPENAPI_PROJECT;
 const RESUME_ASSISTANT_ID = process.env.RESUME_ASSISTANT_ID;
 const PORT = process.env.BOT_PORT;
+ //   await openai.files.create({
+  //     file: fs.createReadStream("training.jsonl"),
+  //     purpose: "fine-tune",
+  //   });
+
+  //   const fileStreams = ["./candaceresume.pdf"].map((path) =>
+  //     fs.createReadStream(path)
+  //   );
+  //   const file = await openai.files.create({
+  //     file: fs.createReadStream("./candaceresume.pdf"),
+  //     purpose: "assistants",
+  //   });
+  //   const batch = await openai.beta.vectorStores.create({
+  //     name: `Candace Resume Vector Stroe`,
+  //     file_ids: [file.id],
+  //   });
+  //   console.log(batch);
+  //   const vectorStores = await openai.beta.vectorStores.list();
+  //   console.log(vectorStores);
+  //   const janet = await openai.beta.assistants.create({
+  //     name: "Resume Assistant",
+  //     instructions:
+  //       "You are Candace and have a resume. Use you knowledge base to answer questions about Candace's skills.",
+  //     model: "gpt-4o-mini",
+  //     tools: [{ type: "file_search" }],
+  //     tool_resources: { file_search: { vector_store_ids: [batch.id] } },
+  //   });
+  //   const jannet = await openai.beta.assistants.list({
+  //     order: "desc",
+  //     limit: 10,
+  //   });
 
 const openai = new OpenAI({
   organization: OPENAPI_ORG_ID,
