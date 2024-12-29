@@ -51,8 +51,12 @@ wss.on("connection", async function connection(ws) {
     const next = i % total;
     i++;
     const sendData = data.data[next];
+    const fakeSocketData = {
+      type: "TXN",
+      ...sendData,
+    };
 
-    ws.send(JSON.stringify(sendData));
+    ws.send(JSON.stringify(fakeSocketData));
   }, 100);
 
   let stocks = [];
@@ -103,9 +107,13 @@ wss.on("connection", async function connection(ws) {
 
         const d = stock.shift();
         if (d && d.ts) {
-          const testTime = dayjs(d.ts).format("MM-DD-YYYY HH:mm:ss");
-          console.log("sending data", d.time, testTime);
-          ws.send(JSON.stringify(d));
+          //   const testTime = dayjs(d.ts).format("MM-DD-YYYY HH:mm:ss");
+          //   console.log("sending data", d.time, testTime);
+          const chartData = {
+            type: "CANDLE",
+            ...d,
+          };
+          ws.send(JSON.stringify(chartData));
         }
       });
     }, 1000);
