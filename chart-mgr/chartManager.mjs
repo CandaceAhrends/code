@@ -29,9 +29,30 @@ chartMap = new Map(getInitialChartStocks(stockDataMap));
 
   await subscriber.subscribe("volume", (message) => {
     const { id, highestVolume } = JSON.parse(message);
+    const allStocks = highestVolume.map(([k, v]) => {
+      return {
+        ticker: k,
+        volume: v,
+      };
+    });
+    // const nvda = allStocks.find((s) => s.ticker === "NVDA");
+    // console.log("found", nvda);
+    const stocks = allStocks
+      .sort((a, b) => {
+        const av = a.volume;
+        const bv = b.volume;
+        if (av < bv) {
+          return 1;
+        } else if (av > bv) {
+          return -1;
+        }
+        return 0;
+      })
+      .slice(0, 20);
 
-    highestVolume.forEach((symbol) => {
+    stocks.forEach((symbol) => {
       console.log("volume symbol from chart manager", symbol);
+
       if (!chartMap.has(symbol)) {
         chartMap.set(symbol, []);
       }
