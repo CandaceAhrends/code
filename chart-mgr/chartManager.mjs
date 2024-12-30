@@ -51,9 +51,9 @@ chartMap = new Map(getInitialChartStocks(stockDataMap));
       .slice(0, 20);
 
     stocks.forEach((symbol) => {
-      console.log("volume symbol from chart manager", symbol);
-
       if (!chartMap.has(symbol)) {
+        console.log("volume symbol from chart manager", symbol);
+
         chartMap.set(symbol, []);
       }
     });
