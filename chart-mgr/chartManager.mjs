@@ -1,4 +1,4 @@
-import ActiveSocket from "../src/socket/ActiveSocket.mjs";
+import ActiveSocket from "./ActiveSocket.mjs";
 import { WebSocketServer } from "ws";
 import {
   getInitialChartStocks,
