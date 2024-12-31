@@ -15,7 +15,7 @@ const PORT = 8777;
 
 let chartMap = new Map();
 
-const stockDataMap = ["TSLA", "NVDA", "SOUN", "RGTI"];
+const stockDataMap = ["TSLA"];
 
 chartMap = new Map(getInitialChartStocks(stockDataMap));
 
@@ -35,8 +35,6 @@ chartMap = new Map(getInitialChartStocks(stockDataMap));
         volume: v,
       };
     });
-    // const nvda = allStocks.find((s) => s.ticker === "NVDA");
-    // console.log("found", nvda);
     const stocks = allStocks
       .sort((a, b) => {
         const av = a.volume;
@@ -48,12 +46,11 @@ chartMap = new Map(getInitialChartStocks(stockDataMap));
         }
         return 0;
       })
-      .slice(0, 20);
+      .slice(0, 5).map(s=>s.ticker);
 
     stocks.forEach((symbol) => {
       if (!chartMap.has(symbol)) {
         console.log("volume symbol from chart manager", symbol);
-        console.log("chartMap", chartMap.keys());
         chartMap.set(symbol, []);
       }
     });
