@@ -132,6 +132,7 @@ const volumeMapper = (stock) => {
     volume: stock.v,
     close: stock.c,
     open: stock.o,
+	  vw: stock.vw,
     transactions: stock.n,
   };
 };
@@ -140,6 +141,11 @@ app.get("/topVolume/:date", async (req, res) => {
   const { date } = req.params;
   try {
     const { results } = await getHistoricalData(date);
+    const spy  = results.find(s=>s.T === 'SPY')
+    const qqq =  results.find(s=>s.T === 'QQQ')	  
+
+	const market = [spy,qqq].map(volumeMapper);
+	console.log(market)  
     const topVolume = results
       .sort((a, b) => b.v - a.v)
       .filter((stock) => !EXCLUDED.includes(stock.T))
@@ -152,7 +158,7 @@ app.get("/topVolume/:date", async (req, res) => {
       .filter((stock) => stock.o >= 20 && stock.o <= 1000)
       .map(volumeMapper);
 
-    res.json({ topOver20, topUnder20 });
+    res.json({ topOver20, topUnder20, market });
   } catch (error) {
     res.status(500).json({ error: "Internal Server Error" });
   }
@@ -160,4 +166,4 @@ app.get("/topVolume/:date", async (req, res) => {
 
 app.listen(7007, () => {
   console.log("Server is running on port 7007");
-});
+}
