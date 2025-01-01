@@ -93,8 +93,8 @@ app.get("/agg/:symbol/:date", async (req, res) => {
   } = await axios.get(url);
   res.json({ results });
 });
-app.get("/news/:symbol", async (req, res) => {
-  const url = `${POLYGON_NEWS_URL}?ticker=${req.params.symbol}&order=desc&limit=10&apiKey=${process.env.POLYGON_APIKEY}`;
+app.get("/news/:symbol/:date", async (req, res) => {
+  const url = `${POLYGON_NEWS_URL}?ticker=${req.params.symbol}&published_utc.lt=${req.params.date}&order=desc&limit=20&apiKey=${process.env.POLYGON_APIKEY}`;
   console.log(url);
   const {
     data: { results },
@@ -132,7 +132,7 @@ const volumeMapper = (stock) => {
     volume: stock.v,
     close: stock.c,
     open: stock.o,
-	  vw: stock.vw,
+    vw: stock.vw,
     transactions: stock.n,
   };
 };
@@ -141,11 +141,11 @@ app.get("/topVolume/:date", async (req, res) => {
   const { date } = req.params;
   try {
     const { results } = await getHistoricalData(date);
-    const spy  = results.find(s=>s.T === 'SPY')
-    const qqq =  results.find(s=>s.T === 'QQQ')	  
+    const spy = results.find((s) => s.T === "SPY");
+    const qqq = results.find((s) => s.T === "QQQ");
 
-	const market = [spy,qqq].map(volumeMapper);
-	console.log(market)  
+    const market = [spy, qqq].map(volumeMapper);
+    console.log(market);
     const topVolume = results
       .sort((a, b) => b.v - a.v)
       .filter((stock) => !EXCLUDED.includes(stock.T))
@@ -166,4 +166,4 @@ app.get("/topVolume/:date", async (req, res) => {
 
 app.listen(7007, () => {
   console.log("Server is running on port 7007");
-}
+});
