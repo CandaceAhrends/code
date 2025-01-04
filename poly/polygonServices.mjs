@@ -6,9 +6,10 @@ import { EXCLUDED } from "./consts.mjs";
 import {
   fetchPreviousTradingAgg,
   fetchTradingAgg,
-  getClosingDetails,
   checkPolyResults,
   normalizeData,
+  getSpyQqq,
+  getTopVolume,
 } from "./polygonUtils.mjs";
 
 const AGG_API_URL = "https://api.polygon.io/v2/aggs/ticker";
@@ -101,25 +102,7 @@ app.get("/topVolume/:date", async (req, res) => {
       res.status(404).json({ error: "Not Found" });
       return;
     }
-
-    const prevMarket = normalizeData(
-      previousVolume.filter((s) => s.T === "SPY" || s.T === "QQQ")
-    );
-    const currMarket = normalizeData(
-      currentVolume.filter((s) => s.T === "SPY" || s.T === "QQQ")
-    );
-    const spyClose = getClosingDetails({
-      prev: prevMarket[0],
-      curr: currMarket[0],
-    });
-    const qqqclose = getClosingDetails({
-      prev: prevMarket[1],
-      curr: currMarket[1],
-    });
-    const market = [
-      { ...spyClose, ...currMarket[0] },
-      { ...qqqclose, ...currMarket[1] },
-    ];
+    const market = getSpyQqq(previousVolume, currentVolume);
 
     const currTopVolume = normalizeData(
       currentVolume
@@ -128,21 +111,7 @@ app.get("/topVolume/:date", async (req, res) => {
         .slice(0, 50)
     );
 
-    const stocks = currTopVolume
-      .map((stock) => {
-        const prevStock = previousVolume.find((s) => s.T === stock.symbol);
-        if (prevStock) {
-          const [prev] = normalizeData([prevStock]);
-          const txn = {
-            ...getClosingDetails({ prev: prev, curr: stock }),
-            ...stock,
-          };
-          return txn;
-        } else {
-          return null;
-        }
-      })
-      .filter((s) => s);
+    const stocks = getTopVolume(previousVolume, currTopVolume);
     console.log("---------> top volume ===========");
     res.json({ stocks, market });
   } catch (error) {

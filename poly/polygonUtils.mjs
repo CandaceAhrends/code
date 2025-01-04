@@ -23,7 +23,41 @@ const volumeMapper = (stock) => {
   };
 };
 
-// input is a dayjs date
+export const getSpyQqq = (prev, curr) => {
+  const [currSpy] = normalizeData([curr.find((stock) => stock.T === "SPY")]);
+  const [currQqq] = normalizeData([curr.find((stock) => stock.T === "QQQ")]);
+  const [prevSpy] = normalizeData([prev.find((stock) => stock.T === "SPY")]);
+  const [prevQqq] = normalizeData([prev.find((stock) => stock.T === "QQQ")]);
+  const spy = {
+    ...getClosingDetails({ prev: prevSpy, curr: currSpy }, currSpy),
+  };
+  const qqq = {
+    ...getClosingDetails({ prev: prevQqq, curr: currQqq }),
+    currQqq,
+  };
+
+  return [spy, qqq];
+};
+
+export const getTopVolume = (previousVolume, currTopVolume) => {
+  const stocks = currTopVolume
+    .map((stock) => {
+      const prevStock = previousVolume.find((s) => s.T === stock.symbol);
+      if (prevStock) {
+        const [prev] = normalizeData([prevStock]);
+        const txn = {
+          ...getClosingDetails({ prev: prev, curr: stock }),
+          ...stock,
+        };
+        return txn;
+      } else {
+        return null;
+      }
+    })
+    .filter((s) => s);
+  return stocks;
+};
+
 export const getPreviousTradingDate = (date) => {
   date = dayjs(date);
   let previousDate = date.subtract(1, "day");
