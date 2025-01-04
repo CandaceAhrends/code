@@ -1,0 +1,155 @@
+import axios from "axios";
+import express from "express";
+import cors from "cors";
+import bodyParser from "body-parser";
+import { EXCLUDED } from "./consts.mjs";
+import {
+  fetchPreviousTradingAgg,
+  fetchTradingAgg,
+  getClosingDetails,
+  checkPolyResults,
+  normalizeData,
+} from "./polygonUtils.mjs";
+
+const AGG_API_URL = "https://api.polygon.io/v2/aggs/ticker";
+const POLYGON_NEWS_URL = "https://api.polygon.io/v2/reference/news";
+const POLYGON_DETAIL_URL =
+  "https://api.polygon.io/v2/snapshot/locale/us/markets/stocks/tickers";
+const POLYGON_TICKER_URL =
+  "https://api.polygon.io/v3/reference/tickers?market=stocks&active=true&limit=1";
+
+// const URL = (date) =>
+//   `https://api.polygon.io/v2/aggs/grouped/locale/us/market/stocks/${date}?adjusted=true&include_otc=false&apiKey=${process.env.POLYGON_APIKEY}`;
+
+const RELATED_COMPANIES_URL = (ticker) =>
+  `https://api.polygon.io/v1/related-companies/${ticker}?apiKey=${process.env.POLYGON_APIKEY}`;
+
+const getAggApi = ({ symbol, date }) =>
+  `${AGG_API_URL}/${symbol}/range/1/minute/${date}/${date}?adjusted=true&sort=asc&apiKey=${process.env.POLYGON_APIKEY}`;
+
+const app = express();
+app.use(cors());
+app.use(express.json());
+app.use(bodyParser.urlencoded({ extended: true }));
+
+app.get("/", async (req, res) => {
+  res.json({ agg: "ok" });
+});
+
+app.get("/related/:symbol", async (req, res) => {
+  const url = RELATED_COMPANIES_URL(req.params.symbol);
+  console.log(url);
+  const {
+    data: { results },
+  } = await axios.get(url);
+  console.log("=====> related", results);
+  res.json(results);
+});
+
+app.get("/agg/:symbol/:date", async (req, res) => {
+  try {
+    const reqData = {
+      symbol: req.params.symbol,
+      date: req.params.date,
+    };
+    const url = getAggApi(reqData);
+    console.log(url);
+    const response = await axios.get(url);
+
+    if (response.status === 404) {
+      res.status(404).json({ error: "Not Found" });
+    } else {
+      const {
+        data: { results },
+      } = response;
+      res.json({ results });
+    }
+  } catch (e) {
+    res.status(400).json({ error: "Bad Request" });
+  }
+});
+app.get("/news/:symbol/:date", async (req, res) => {
+  const url = `${POLYGON_NEWS_URL}?ticker=${req.params.symbol}&published_utc.lt=${req.params.date}&order=desc&limit=20&apiKey=${process.env.POLYGON_APIKEY}`;
+  console.log(url);
+  const {
+    data: { results },
+  } = await axios.get(url);
+  res.json({ results });
+});
+app.get("/detail/:symbol", async (req, res) => {
+  const url = `${POLYGON_DETAIL_URL}/${req.params.symbol}?apiKey=${process.env.POLYGON_APIKEY}`;
+  console.log(url);
+  const { data } = await axios.get(url);
+  res.json({ ticker: data?.ticker });
+});
+
+app.get("/ticker/:symbol", async (req, res) => {
+  const url = `${POLYGON_TICKER_URL}&ticker=${req.params.symbol}&apiKey=${process.env.POLYGON_APIKEY}`;
+  console.log(url);
+  const { data } = await axios.get(url);
+  res.json(data);
+});
+
+app.get("/topVolume/:date", async (req, res) => {
+  const { date } = req.params;
+  try {
+    const previousVolume = checkPolyResults(
+      await fetchPreviousTradingAgg(date)
+    );
+    const currentVolume = checkPolyResults(await fetchTradingAgg(date));
+    if (!previousVolume.length || !currentVolume.length) {
+      res.status(404).json({ error: "Not Found" });
+      return;
+    }
+
+    const prevMarket = normalizeData(
+      previousVolume.filter((s) => s.T === "SPY" || s.T === "QQQ")
+    );
+    const currMarket = normalizeData(
+      currentVolume.filter((s) => s.T === "SPY" || s.T === "QQQ")
+    );
+    const spyClose = getClosingDetails({
+      prev: prevMarket[0],
+      curr: currMarket[0],
+    });
+    const qqqclose = getClosingDetails({
+      prev: prevMarket[1],
+      curr: currMarket[1],
+    });
+    const market = [
+      { ...spyClose, ...currMarket[0] },
+      { ...qqqclose, ...currMarket[1] },
+    ];
+
+    const currTopVolume = normalizeData(
+      currentVolume
+        .sort((a, b) => b.v - a.v)
+        .filter((stock) => !EXCLUDED.includes(stock.T))
+        .slice(0, 50)
+    );
+
+    const stocks = currTopVolume
+      .map((stock) => {
+        const prevStock = previousVolume.find((s) => s.T === stock.symbol);
+        if (prevStock) {
+          const [prev] = normalizeData([prevStock]);
+          const txn = {
+            ...getClosingDetails({ prev: prev, curr: stock }),
+            ...stock,
+          };
+          return txn;
+        } else {
+          return null;
+        }
+      })
+      .filter((s) => s);
+    console.log("---------> top volume ===========");
+    res.json({ stocks, market });
+  } catch (error) {
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+app.listen(7007, () => {
+  console.log("Server is running on port 7007");
+});
