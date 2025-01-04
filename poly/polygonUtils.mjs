@@ -36,7 +36,7 @@ export const getSpyQqq = (prev, curr) => {
     ...getClosingDetails({ prev: prevQqq, curr: currQqq }),
     ...currQqq,
   };
-
+  console.log("spy", spy);
   return [spy, qqq];
 };
 
