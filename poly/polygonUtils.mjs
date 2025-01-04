@@ -29,11 +29,12 @@ export const getSpyQqq = (prev, curr) => {
   const [prevSpy] = normalizeData([prev.find((stock) => stock.T === "SPY")]);
   const [prevQqq] = normalizeData([prev.find((stock) => stock.T === "QQQ")]);
   const spy = {
-    ...getClosingDetails({ prev: prevSpy, curr: currSpy }, currSpy),
+    ...getClosingDetails({ prev: prevSpy, curr: currSpy }),
+    ...currSpy,
   };
   const qqq = {
     ...getClosingDetails({ prev: prevQqq, curr: currQqq }),
-    currQqq,
+    ...currQqq,
   };
 
   return [spy, qqq];
@@ -89,7 +90,8 @@ export const getClosingDetails = ({ prev, curr }) => {
   const diff = currClose - prevClose;
   const percent = (diff / prevClose) * 100;
   const isPositive = currClose > prevClose;
-  return { prevClose, currClose, diff, percent, isPositive };
+  const relativeVolume = curr?.volume / prev?.volume;
+  return { prevClose, currClose, diff, percent, relativeVolume, isPositive };
 };
 
 export const checkPolyResults = (data) => {
