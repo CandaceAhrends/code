@@ -2,7 +2,7 @@ import axios from "axios";
 import express from "express";
 import cors from "cors";
 import bodyParser from "body-parser";
-import { EXCLUDED } from "./consts.mjs";
+import { EXCLUDED, TIINGO_NEWS_URL } from "./consts.mjs";
 import {
   fetchPreviousTradingAgg,
   fetchTradingAgg,
@@ -18,9 +18,6 @@ const POLYGON_DETAIL_URL =
   "https://api.polygon.io/v2/snapshot/locale/us/markets/stocks/tickers";
 const POLYGON_TICKER_URL =
   "https://api.polygon.io/v3/reference/tickers?market=stocks&active=true&limit=1";
-
-// const URL = (date) =>
-//   `https://api.polygon.io/v2/aggs/grouped/locale/us/market/stocks/${date}?adjusted=true&include_otc=false&apiKey=${process.env.POLYGON_APIKEY}`;
 
 const RELATED_COMPANIES_URL = (ticker) =>
   `https://api.polygon.io/v1/related-companies/${ticker}?apiKey=${process.env.POLYGON_APIKEY}`;
@@ -69,6 +66,17 @@ app.get("/agg/:symbol/:date", async (req, res) => {
     res.status(400).json({ error: "Bad Request" });
   }
 });
+app.get("/tiingonews/:symbols", async (req, res) => {
+  const url = TIINGO_NEWS_URL(req.params.symbols);
+  console.log(url);
+  try {
+    const { data } = await axios.get(url);
+    res.json(data);
+  } catch (e) {
+    res.status(400).json({ error: "Bad Request" });
+  }
+});
+
 app.get("/news/:symbol/:date", async (req, res) => {
   const url = `${POLYGON_NEWS_URL}?ticker=${req.params.symbol}&published_utc.lt=${req.params.date}&order=desc&limit=20&apiKey=${process.env.POLYGON_APIKEY}`;
   console.log(url);
