@@ -2,7 +2,11 @@ import axios from "axios";
 import express from "express";
 import cors from "cors";
 import bodyParser from "body-parser";
-import { EXCLUDED, TIINGO_NEWS_URL } from "./consts.mjs";
+import {
+  EXCLUDED,
+  TIINGO_NEWS_URL,
+  TIINGO_SYMBOLS_NEWS_URL,
+} from "./consts.mjs";
 import {
   fetchPreviousTradingAgg,
   fetchTradingAgg,
@@ -66,8 +70,20 @@ app.get("/agg/:symbol/:date", async (req, res) => {
     res.status(400).json({ error: "Bad Request" });
   }
 });
+
 app.get("/tiingonews/:symbols", async (req, res) => {
-  const url = TIINGO_NEWS_URL(req.params.symbols);
+  const url = TIINGO_SYMBOLS_NEWS_URL(req.params.symbols);
+  console.log(url);
+  try {
+    const { data } = await axios.get(url);
+    res.json(data);
+  } catch (e) {
+    res.status(400).json({ error: "Bad Request" });
+  }
+});
+
+app.get("/tiingonews", async (req, res) => {
+  const url = TIINGO_NEWS_URL();
   console.log(url);
   try {
     const { data } = await axios.get(url);
