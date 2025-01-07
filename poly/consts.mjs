@@ -7,6 +7,9 @@ export const TIINGO_SYMBOLS_NEWS_URL = (symbolList) =>
 export const TIINGO_NEWS_URL = () =>
   `https://api.tiingo.com/tiingo/news?token=${process.env.TIINGO_APIKEY}`;
 
+export const TIINGO_NEWS_DETAIL_URL = (symbol) =>
+  `https://api.polygon.io/v3/reference/tickers/${symbol}?apiKey=${process.env.POLYGON_APIKEY}`;
+
 export const EXCLUDED = [
   "TQQQ",
   "SQQQ",

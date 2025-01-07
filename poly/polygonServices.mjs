@@ -6,6 +6,7 @@ import {
   EXCLUDED,
   TIINGO_NEWS_URL,
   TIINGO_SYMBOLS_NEWS_URL,
+  TIINGO_NEWS_DETAIL_URL,
 } from "./consts.mjs";
 import {
   fetchPreviousTradingAgg,
@@ -140,6 +141,16 @@ app.get("/topVolume/:date", async (req, res) => {
     res.json({ stocks, market });
   } catch (error) {
     res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+app.get("/desc/:symbol", async (req, res) => {
+  try {
+    const url = TIINGO_NEWS_DETAIL_URL(req.params.symbol);
+    const response = await axios.get(url);
+    res.json(response.data);
+  } catch (e) {
+    res.status(400).json({ error: "Bad Request" });
   }
 });
 
