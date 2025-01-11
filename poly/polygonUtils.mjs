@@ -60,7 +60,6 @@ export const getTopVolume = (previousVolume, currTopVolume) => {
 };
 
 export const getPreviousTradingDate = (date) => {
-  date = dayjs(date);
   let previousDate = date.subtract(1, "day");
   while (previousDate.day() === 0 || previousDate.day() === 6) {
     previousDate = previousDate.subtract(1, "day");
@@ -73,10 +72,27 @@ export const fetchTradingAgg = async (date) => {
 };
 
 export const fetchPreviousTradingAgg = async (date) => {
-  const previousDate = getPreviousTradingDate(date);
-  const skipPreviousDate = getPreviousTradingDate(previousDate);
-  let urlDate = previousDate.format("YYYY-MM-DD");
-  let response = await getHistoricalData(urlDate);
+  const prevDates = [...Array(5)]
+    .reduce(
+      (acc) => {
+        const [dateToCheck] = acc;
+        const prevDate = getPreviousTradingDate(dateToCheck);
+        acc = [prevDate, ...acc];
+        return acc;
+      },
+      [dayjs(date)]
+    )
+    .slice(0, -1);
+
+  let response = { resultsCount: 0 };
+  while (
+    prevDates.length > 0 &&
+    (response.resultsCount === 0 || response.status === 404)
+  ) {
+    const urlDate = prevDates.pop().format("YYYY-MM-DD");
+    response = await getHistoricalData(urlDate);
+  }
+
   if (response.status === 404) {
     urlDate = skipPreviousDate.format("YYYY-MM-DD");
     response = await getHistoricalData(urlDate);

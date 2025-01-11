@@ -119,11 +119,16 @@ app.get("/ticker/:symbol", async (req, res) => {
 app.get("/topVolume/:date", async (req, res) => {
   const { date } = req.params;
   try {
+    const currentVolume = checkPolyResults(await fetchTradingAgg(date));
+    if (!currentVolume.length) {
+      res.status(404).json({ error: "Not Found" });
+      return;
+    }
     const previousVolume = checkPolyResults(
       await fetchPreviousTradingAgg(date)
     );
-    const currentVolume = checkPolyResults(await fetchTradingAgg(date));
-    if (!previousVolume.length || !currentVolume.length) {
+
+    if (!previousVolume.length) {
       res.status(404).json({ error: "Not Found" });
       return;
     }
