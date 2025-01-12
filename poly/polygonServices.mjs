@@ -79,7 +79,7 @@ app.get("/agg/:symbol/:date/:timeframe", async (req, res) => {
       timeframe: mapTimeFrame(req.params.timeframe),
     };
     const url = getAggTimeFrameApi(reqData);
-    console.log(url);
+    console.log("timeframe", url);
     const response = await axios.get(url);
 
     if (response.status === 404) {
