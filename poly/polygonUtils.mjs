@@ -120,3 +120,18 @@ export const checkPolyResults = (data) => {
 export const normalizeData = (list) => {
   return list.map(volumeMapper);
 };
+
+export const mapTimeFrame = (timeFrame) => {
+  switch (timeFrame) {
+    case "1m":
+      return "1/minute";
+    case "5m":
+      return "5/minute";
+    case "15m":
+      return "15/minute";
+    case "30m":
+      return "30/minute";
+    default:
+      return "1/minute";
+  }
+};

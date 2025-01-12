@@ -7,6 +7,8 @@ import {
   TIINGO_NEWS_URL,
   TIINGO_SYMBOLS_NEWS_URL,
   TIINGO_NEWS_DETAIL_URL,
+  getAggTimeFrameApi,
+  getAggApi,
 } from "./consts.mjs";
 import {
   fetchPreviousTradingAgg,
@@ -15,9 +17,9 @@ import {
   normalizeData,
   getSpyQqq,
   getTopVolume,
+  mapTimeFrame,
 } from "./polygonUtils.mjs";
 
-const AGG_API_URL = "https://api.polygon.io/v2/aggs/ticker";
 const POLYGON_NEWS_URL = "https://api.polygon.io/v2/reference/news";
 const POLYGON_DETAIL_URL =
   "https://api.polygon.io/v2/snapshot/locale/us/markets/stocks/tickers";
@@ -26,9 +28,6 @@ const POLYGON_TICKER_URL =
 
 const RELATED_COMPANIES_URL = (ticker) =>
   `https://api.polygon.io/v1/related-companies/${ticker}?apiKey=${process.env.POLYGON_APIKEY}`;
-
-const getAggApi = ({ symbol, date }) =>
-  `${AGG_API_URL}/${symbol}/range/1/minute/${date}/${date}?adjusted=true&sort=asc&apiKey=${process.env.POLYGON_APIKEY}`;
 
 const app = express();
 app.use(cors());
@@ -56,6 +55,30 @@ app.get("/agg/:symbol/:date", async (req, res) => {
       date: req.params.date,
     };
     const url = getAggApi(reqData);
+    console.log(url);
+    const response = await axios.get(url);
+
+    if (response.status === 404) {
+      res.status(404).json({ error: "Not Found" });
+    } else {
+      const {
+        data: { results },
+      } = response;
+      res.json({ results });
+    }
+  } catch (e) {
+    res.status(400).json({ error: "Bad Request" });
+  }
+});
+
+app.get("/agg/:symbol/:date/:timeframe", async (req, res) => {
+  try {
+    const reqData = {
+      symbol: req.params.symbol,
+      date: req.params.date,
+      timeframe: mapTimeFrame(req.params.timeframe),
+    };
+    const url = getAggTimeFrameApi(reqData);
     console.log(url);
     const response = await axios.get(url);
 
