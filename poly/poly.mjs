@@ -161,7 +161,42 @@ app.get("/topVolume/:date", async (req, res) => {
       currentVolume
         .sort((a, b) => b.v - a.v)
         .filter((stock) => !EXCLUDED.includes(stock.T))
-        .slice(0, 50)
+        .slice(0, 25)
+    );
+
+    const stocks = getTopVolume(previousVolume, currTopVolume);
+    console.log("---------> top volume ===========");
+    res.json({ stocks, market });
+  } catch (error) {
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+app.get("/topVolume/:date/:page", async (req, res) => {
+  const { date, page } = req.params;
+  try {
+    const currentVolume = checkPolyResults(await fetchTradingAgg(date));
+    if (!currentVolume.length) {
+      res.status(404).json({ error: "Not Found" });
+      return;
+    }
+    const previousVolume = checkPolyResults(
+      await fetchPreviousTradingAgg(date)
+    );
+
+    if (!previousVolume.length) {
+      res.status(404).json({ error: "Not Found" });
+      return;
+    }
+    const market = getSpyQqq(previousVolume, currentVolume);
+    const toPage = 25 * page;
+    const fromPage = toPage - 25;
+
+    const currTopVolume = normalizeData(
+      currentVolume
+        .sort((a, b) => b.v - a.v)
+        .filter((stock) => !EXCLUDED.includes(stock.T))
+        .slice(fromPage, toPage)
     );
 
     const stocks = getTopVolume(previousVolume, currTopVolume);
