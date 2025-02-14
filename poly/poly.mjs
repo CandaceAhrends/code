@@ -172,8 +172,23 @@ app.get("/topVolume/:date", async (req, res) => {
   }
 });
 
+let cache = {};
+
 app.get("/topVolume/:date/:page", async (req, res) => {
   const { date, page } = req.params;
+  if (page > 1 && cache[date] && Array.isArray(cache[date])) {
+    const toPage = 25 * page;
+    let fromPage = toPage - 25;
+    if (fromPage > cache[date].length) {
+      res.status(200).json({ stocks: [] });
+      return;
+    }
+
+    const stocks = cache[date].slice(fromPage, toPage);
+    res.json({ stocks });
+    return;
+  }
+
   try {
     const currentVolume = checkPolyResults(await fetchTradingAgg(date));
     if (!currentVolume.length) {
@@ -188,20 +203,20 @@ app.get("/topVolume/:date/:page", async (req, res) => {
       res.status(404).json({ error: "Not Found" });
       return;
     }
-    const market = getSpyQqq(previousVolume, currentVolume);
-    const toPage = 25 * page;
-    const fromPage = toPage - 25;
 
     const currTopVolume = normalizeData(
       currentVolume
         .sort((a, b) => b.v - a.v)
         .filter((stock) => !EXCLUDED.includes(stock.T))
-        .slice(fromPage, toPage)
+        .slice(0, 200)
     );
 
-    const stocks = getTopVolume(previousVolume, currTopVolume);
+    let stocks;
+
+    stocks = getTopVolume(previousVolume, currTopVolume);
+    cache[date] = stocks;
     console.log("---------> top volume ===========");
-    res.json({ stocks, market });
+    res.status(200).json({ stocks: stocks.slice(0, 25) });
   } catch (error) {
     res.status(500).json({ error: "Internal Server Error" });
   }
