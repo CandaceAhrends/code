@@ -208,7 +208,7 @@ app.get("/topVolume/:date/:page", async (req, res) => {
       currentVolume
         .sort((a, b) => b.v - a.v)
         .filter((stock) => !EXCLUDED.includes(stock.T))
-        .slice(0, 200)
+        .slice(0, 1000)
     );
 
     let stocks;
