@@ -174,8 +174,8 @@ app.get("/topVolume/:date", async (req, res) => {
 
 let cache = {};
 
-app.get("/topVolume/:date/:page", async (req, res) => {
-  const { date, page } = req.params;
+app.get("/topVolume/:date/:page/:sorttype", async (req, res) => {
+  const { date, page, sorttype } = req.params;
   if (page > 1 && cache[date] && Array.isArray(cache[date])) {
     const toPage = 25 * page;
     let fromPage = toPage - 25;
@@ -214,6 +214,9 @@ app.get("/topVolume/:date/:page", async (req, res) => {
     let stocks;
 
     stocks = getTopVolume(previousVolume, currTopVolume);
+    if (sorttype === "percent") {
+      stocks = stocks.sort((a, b) => b.percent - a.percent);
+    }
     cache[date] = stocks;
     console.log("---------> top volume ===========");
     res.status(200).json({ stocks: stocks.slice(0, 25) });
